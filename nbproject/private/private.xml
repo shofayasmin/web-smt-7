@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="1"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/home/shofa/smt7/WebApplication1/web/login.jsp</file>
+            <file>file:/home/shofa/smt7/WebApplication1/web/WEB-INF/web.xml</file>
+            <file>file:/home/shofa/smt7/WebApplication1/src/java/Account/LoginServlet.java</file>
+            <file>file:/home/shofa/smt7/WebApplication1/src/java/Product/ProductServlet.java</file>
+            <file>file:/home/shofa/smt7/WebApplication1/src/java/DataModel/User.java</file>
+            <file>file:/home/shofa/smt7/WebApplication1/web/product.jsp</file>
+            <file>file:/home/shofa/smt7/WebApplication1/src/java/DataModel/Product.java</file>
+            <file>file:/home/shofa/smt7/WebApplication1/src/java/DataIO/ProductIO.java</file>
+            <file>file:/home/shofa/smt7/WebApplication1/web/includes/header.html</file>
+            <file>file:/home/shofa/smt7/WebApplication1/src/java/DataIO/UserIO.java</file>
+            <file>file:/home/shofa/smt7/WebApplication1/web/includes/footer.html</file>
+        </group>
+    </open-files>
+</project-private>
