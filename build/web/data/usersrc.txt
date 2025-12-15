@@ -1,2 +1,1 @@
-ab@mail.com|a|b|11111111
-ab@mail.com|a|b|11111111
+a@mail.com|a|a|111

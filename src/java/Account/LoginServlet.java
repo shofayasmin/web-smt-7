@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse; 
@@ -79,8 +80,22 @@ public class LoginServlet extends HttpServlet {
             if (user != null) {
                 HttpSession session = request.getSession();
                 session.setAttribute("currentUser", user);
+                
+                String remember = request.getParameter("rememberMe");
+                if("true".equals(remember)){
+                    Cookie cookie = new Cookie("rememberEmail", email);
+                    cookie.setMaxAge(7 * 24 * 60 * 60); // 7 days
+                    cookie.setPath(request.getContextPath());
+                    response.addCookie(cookie);
+                    getServletContext().log("Remember Me cookies created for: " + email);
+                } else {
+                    Cookie cookie = new Cookie("rememberEmail", "");
+                    cookie.setMaxAge(0);
+                    cookie.setPath(request.getContextPath());
+                    response.addCookie(cookie);
+                }
+                
                 response.sendRedirect(request.getContextPath() + "/products");
-
             } else {
                 request.setAttribute("message", "Invalid name or password.");
                 getServletContext().getRequestDispatcher(resultUrl).forward(request, response);
@@ -91,6 +106,25 @@ public class LoginServlet extends HttpServlet {
             getServletContext().getRequestDispatcher(resultUrl).forward(request, response);
         }
     }
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        Cookie[] cookies = request.getCookies();
+        String savedEmail = "";
+        if (cookies != null) {
+            for (Cookie c : cookies) {
+                if ("rememberEmail".equals(c.getName())) {
+                    savedEmail = c.getValue();
+                    break;
+                }
+            }
+        }
+        request.setAttribute("savedEmail", savedEmail);
+        getServletContext().getRequestDispatcher("/login.jsp").forward(request, response);
+    }
+
 
     @Override
     public String getServletInfo() {

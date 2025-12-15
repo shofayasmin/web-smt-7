@@ -10,6 +10,14 @@
 <project name="WebApplication1" default="default" basedir=".">
     <description>Builds, tests, and runs the project WebApplication1.</description>
     <import file="nbproject/build-impl.xml"/>
+
+    <target name="-copy-webinf-lib">
+        <mkdir dir="${build.web.dir}/WEB-INF/lib"/>
+        <copy todir="${build.web.dir}/WEB-INF/lib">
+            <fileset dir="lib"/>
+        </copy>
+    </target>
+
     <!--
 
     There exist several targets which are by default empty and which can be 
