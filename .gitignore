@@ -1,0 +1,16 @@
+# NetBeans build output
+/build/
+/dist/
+
+# Compiled Java
+*.class
+
+# NetBeans auto files
+**/.netbeans_automatic_build
+**/.netbeans_update_resources
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
