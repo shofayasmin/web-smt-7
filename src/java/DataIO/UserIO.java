@@ -1,59 +1,85 @@
 package DataIO;
 
 import DataModel.User;
-import java.io.*;
-import java.util.StringTokenizer;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 
 public class UserIO {
 
-    // Save new user to file
-    public static boolean add(User user, String filepath) {
+    public static ArrayList<User> getAllUsers() {
+        ArrayList<User> list = new ArrayList<>();
+        DBUtil db = new DBUtil();
+
         try {
-            File file = new File(filepath);
-            PrintWriter out = new PrintWriter(new FileWriter(file, true));
-            out.println(user.getEmail() + "|" + user.getFirstName() + "|" +
-                        user.getLastName() + "|" + user.getPassword());
-            out.close();
-            return true;
-        } catch (IOException e) {
+            String sql = "SELECT * FROM user";
+            ResultSet rs = db.QueryData(sql);
+
+            while (rs.next()) {
+                User u = new User();
+                u.setUserID(rs.getInt("UserID"));
+                u.setFirstName(rs.getString("FirstName"));
+                u.setLastName(rs.getString("LastName"));
+                u.setEmail(rs.getString("Email"));
+                list.add(u);
+            }
+
+            db.Close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public static boolean add(User user) {
+        DBUtil db = new DBUtil();
+
+        try {
+            String sql =
+                "INSERT INTO `user` (FirstName, LastName, Email) VALUES (" +
+                "'" + user.getFirstName() + "', " +
+                "'" + user.getLastName() + "', " +
+                "'" + user.getEmail() + "')";
+
+            int result = db.QueryUpdate(sql);
+            db.Close();
+            return result > 0;
+
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    // Search user based on firstName + lastName + password
-    public static User get(String firstName, String lastName, String password, String filepath) {
+
+
+    public static User get(String firstName, String lastName) {
+        DBUtil db = new DBUtil();
+
         try {
-            File file = new File(filepath);
-            BufferedReader in = new BufferedReader(new FileReader(file));
-            String line = in.readLine();
+            String sql =
+                "SELECT * FROM `user` WHERE FirstName='" + firstName +
+                "' AND LastName='" + lastName + "'";
 
-            while (line != null) {
-                StringTokenizer t = new StringTokenizer(line, "|");
-                if (t.countTokens() < 4) {
-                    line = in.readLine();
-                    continue;
-                }
+            ResultSet rs = db.QueryData(sql);
 
-                String email = t.nextToken();
-                String firstNameToken = t.nextToken();
-                String lastNameToken = t.nextToken();
-                String passwordToken = t.nextToken();
-
-                if (firstNameToken.equalsIgnoreCase(firstName)
-                        && lastNameToken.equalsIgnoreCase(lastName)
-                        && passwordToken.equals(password)) {
-                    User user = new User(firstNameToken, lastNameToken, email, passwordToken);
-                    in.close();
-                    return user;
-                }
-                line = in.readLine();
+            if (rs.next()) {
+                User u = new User();
+                u.setUserID(rs.getInt("UserID"));
+                u.setFirstName(rs.getString("FirstName"));
+                u.setLastName(rs.getString("LastName"));
+                u.setEmail(rs.getString("Email"));
+                db.Close();
+                return u;
             }
-            in.close();
+
+            db.Close();
             return null;
-        } catch (IOException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
+
 }

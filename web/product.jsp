@@ -1,106 +1,107 @@
-<%-- 
-    Document   : product
-    Created on : Nov 24, 2025, 11:30:35 AM
-    Author     : ASUS
---%>
-
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
-<%@include file="/includes/header.html" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.util.*, DataModel.Product" %>
+<%@ include file="/includes/header.jsp" %>
 
 <div class="container mt-4">
-    <h2>Product Catalog</h2>
+    <h2>Products</h2>
 
+    <c:if test="${not empty message}">
+        <div class="alert alert-info alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            ${message}
+        </div>
+    </c:if>
+    
+    <% 
+        List<Product> products = (List<Product>) request.getAttribute("products");
+        String message = (String) request.getAttribute("message");
+        if (message != null) {
+    %>
+        <div class="alert alert-info alert-dismissible fade in" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <%= message %>
+        </div>
+    <% } %>
+    
+    <div class="d-flex justify-content-start gap-2 mb-4">
+        <a href="<%= request.getContextPath() %>/products?actiontype=new"
+            class="btn btn-success ">
+            Add Product
+         </a>
+
+        <a href="<%= request.getContextPath() %>/cart"
+            class="btn btn-primary ml-2">
+            View Cart
+         </a>     
+    </div>
+            
     <table class="table table-bordered table-striped mt-3">
-        <thead class="table-dark">
+        <thead class="table-default">
             <tr>
-                <th>ID</th>
+                <th>#</th>
                 <th>Code</th>
                 <th>Description</th>
                 <th>Price</th>
-                <th>Actions</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             <%
-                java.util.ArrayList<DataModel.Product> products =
-                    (java.util.ArrayList<DataModel.Product>) request.getAttribute("products");
-
-                if (products != null) {
-                    for (DataModel.Product p : products) {
+                if (products != null && !products.isEmpty()) {
+                    int index = 1;
+                    for (Product p : products) {
             %>
-            <tr data-id="<%= p.getId() %>">
-                <td><%= p.getId() %></td>
-                <td><%= p.getCode() %></td>
-                <td><%= p.getDescription() %></td>
-                <td><%= p.getPriceCurrencyFormat() %></td>
-                <td>
-                    <button class="btn btn-danger btn-sm" onclick="deleteProduct(<%= p.getId() %>)">Delete</button>
-                    <button class="btn btn-primary btn-sm" onclick="buyProduct(<%= p.getId() %>)">Buy</button>
-                </td>
-            </tr>
+                <tr>
+                    <td><%= index++ %></td>
+                    <td><%= p.getCode() %></td>
+                    <td><%= p.getDescription() %></td>
+                    <td><%= p.getPriceCurrencyFormat() %></td>
+                    <td>
+                        <a href="<%= request.getContextPath() %>/products?actiontype=edit&productid=<%= p.getId() %>"
+                           class="btn btn-warning btn-sm">
+                            Edit
+                        </a>
+
+                        <form method="post"
+                            action="<%= request.getContextPath() %>/products"
+                            style="display:inline;">
+
+                          <input type="hidden" name="productid" value="<%= p.getId() %>">
+
+                          <button type="submit"
+                                  name="actiontype"
+                                  value="Delete"
+                                  class="btn btn-danger btn-sm"
+                                  onclick="return confirm('Delete this product?')">
+                              Delete
+                          </button>
+
+                          <button type="submit"
+                                  name="actiontype"
+                                  value="AddCart"
+                                  class="btn btn-primary btn-sm">
+                              Add to Cart
+                          </button>
+                      </form>
+                    </td>
+
+                </tr>
             <%
                     }
+                } else {
+            %>
+                <tr>
+                    <td colspan="5" class="text-center text-muted">No products available.</td>
+                </tr>
+            <%
                 }
             %>
         </tbody>
     </table>
 </div>
-<script>
-    function deleteProduct(id) {
-        if (!confirm('Are you sure you want to delete product #' + id + '?')) return;
 
-        const row = document.querySelector('tr[data-id="' + id + '"]');
-        if (row) row.remove();
-
-        showAlert('Product #' + id + ' removed (client-side).', 'warning');
-
-        // NOTE: If you later implement server delete, send fetch()/XMLHttpRequest here.
-        // Example:
-        // fetch('/yourapp/products/delete?id=' + id, { method: 'POST' }).then(...)
-    }
-
-    function buyProduct(id) {
-        showAlert('Buy clicked for product #' + id + '.', 'success');
-        console.log('Buy clicked for product', id);
-
-        // optional: open a modal or redirect to checkout
-        // window.location.href = '/yourapp/checkout?product=' + id;
-    }
-
-    function showAlert(message, type) {
-        // type: success, info, warning, danger
-        var alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-' + type + ' alert-dismissible';
-        alertDiv.setAttribute('role', 'alert');
-
-        // Bootstrap 3 close button
-        var closeBtn = document.createElement('button');
-        closeBtn.type = 'button';
-        closeBtn.className = 'close';
-        closeBtn.setAttribute('data-dismiss', 'alert');
-        closeBtn.innerHTML = '&times;';
-        alertDiv.appendChild(closeBtn);
-
-        // message
-        alertDiv.appendChild(document.createTextNode(" " + message));
-
-        // Add alert to .container
-        var container = document.querySelector('.container');
-        if (container) {
-            container.prepend(alertDiv);
-        } else {
-            document.body.insertBefore(alertDiv, document.body.firstChild);
-        }
-
-        // Auto dismiss after 4 seconds
-        setTimeout(function() {
-            if (alertDiv && alertDiv.parentNode) {
-                alertDiv.parentNode.removeChild(alertDiv);
-            }
-        }, 4000);
-    }
-
-</script>
-<%@include file="/includes/footer.html" %>
+<%@ include file="/includes/footer.jsp" %>

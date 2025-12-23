@@ -29,10 +29,14 @@
             </div>
             <div class="panel-body">
 
-              <!-- optional: show messages -->
               <c:if test="${not empty message}">
-                <div class="alert alert-info">${message}</div>
-              </c:if>
+                <div class="alert alert-info alert-dismissible fade in" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    ${message}
+                </div>
+            </c:if>
 
               <form action="auth" method="post" role="form">
                 <div class="form-group">
@@ -47,14 +51,15 @@
 
                 <div class="form-group">
                   <label for="email" class="control-label">Email</label>
-                  <input type="email" id="email" name="email" class="form-control" required>
+                  <input type="email" id="email" name="email" class="form-control" value="${savedEmail}"  required>
                 </div>
 
-                <div class="form-group">
-                  <label for="password" class="control-label">Password</label>
-                  <input type="password" id="password" name="password" class="form-control" required>
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" name="rememberMe" value="${savedEmail}"> Remember me
+                    </label> 
                 </div>
-
+                
                 <div class="row">
                   <div class="col-xs-6">
                     <input type="submit" name="action" value="Login" class="btn btn-primary btn-block">

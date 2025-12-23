@@ -1,84 +1,106 @@
- /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package DataIO;
 
 import DataModel.Product;
+import java.math.BigDecimal;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 
-/**
- *
- * @author ASUS
- */
 public class ProductIO {
-    public static ArrayList<Product> list;
 
+    // READ ALL 
     public static ArrayList<Product> getInitList() {
+        ArrayList<Product> list = new ArrayList<>();
+        DBUtil db = new DBUtil();
+
         try {
-            if (list == null) {
-                list = new ArrayList<>();
+            String sql = "SELECT ProductID, ProductCode, ProductDescription, ProductPrice FROM `product`";
+            ResultSet rs = db.QueryData(sql);
+
+            while (rs != null && rs.next()) {
                 Product p = new Product();
-                p.setId(0);
-                p.setCode("xxx1");
-                p.setPrice(120.0);
-                p.setDescription("desc.");
+                p.setId(rs.getInt("ProductID"));
+                p.setCode(rs.getString("ProductCode"));
+                p.setDescription(rs.getString("ProductDescription"));
+                p.setPrice(rs.getBigDecimal("ProductPrice"));
                 list.add(p);
-
-                Product p2 = new Product();
-                p2.setId(1);
-                p2.setCode("xxx2");
-                p2.setPrice(150.0);
-                p2.setDescription("desc.");
-                list.add(p2);
             }
-            return list;
+            db.Close();
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
+
+        return list;
     }
 
+    // READ ONE
     public static Product get(String productid) {
+        DBUtil db = new DBUtil();
+
         try {
-            if (list == null) {
-                getInitList(); // ensure list initialized
-            }
             int id = Integer.parseInt(productid);
-            return getById(id);
-        } catch (NumberFormatException nfe) {
-            nfe.printStackTrace();
-            return null;
+            String sql = "SELECT * FROM `product` WHERE ProductID=" + id;
+            ResultSet rs = db.QueryData(sql);
+
+            if (rs != null && rs.next()) {
+                Product p = new Product();
+                p.setId(rs.getInt("ProductID"));
+                p.setCode(rs.getString("ProductCode"));
+                p.setDescription(rs.getString("ProductDescription"));
+                p.setPrice(rs.getBigDecimal("ProductPrice"));
+                db.Close();
+                return p;
+            }
+            db.Close();
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
-        }
-    }
-
-    public static Product getById(int id) {
-        if (list == null) return null;
-        for (Product p : list) {
-            if (p.getId() == id) return p;
         }
         return null;
     }
 
+    // CREATE
     public static boolean add(Product p) {
-        if (list == null) getInitList();
-        if (p.getId() == 0) {
-            int nextId = list.size() > 0 ? list.get(list.size()-1).getId() + 1 : 0;
-            p.setId(nextId);
+        DBUtil db = new DBUtil();
+        try {
+            String sql =
+                "INSERT INTO `product` (ProductCode, ProductDescription, ProductPrice) VALUES ('" +
+                p.getCode() + "', '" +
+                p.getDescription() + "', " +
+                p.getPrice().toPlainString() + ")";
+            int result = db.QueryUpdate(sql);
+            db.Close();
+            return result > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-        return list.add(p);
     }
 
+    // DELETE
     public static boolean delete(int id) {
-        Product found = getById(id);
-        if (found != null) {
-            return list.remove(found);
+        DBUtil db = new DBUtil();
+        try {
+            String sql = "DELETE FROM `product` WHERE ProductID=" + id;
+            int result = db.QueryUpdate(sql);
+            db.Close();
+            return result > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
         }
-        return false;
     }
+    
+    //UPDATE
+    public static boolean update(Product p) {
+        DBUtil db = new DBUtil();
+        String sql =
+            "UPDATE `product` SET " +
+            "ProductCode='" + p.getCode() + "', " +
+            "ProductDescription='" + p.getDescription() + "', " +
+            "ProductPrice=" + p.getPrice() +
+            " WHERE ProductID=" + p.getId();
+
+        int result = db.QueryUpdate(sql);
+        return result > 0;
+    }
+
 }

@@ -1,95 +1,198 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package Product;
 
 import DataIO.ProductIO;
+import DataModel.Cart;
+import DataModel.LineItem;
 import DataModel.Product;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.*;
+import javax.servlet.http.*;
 
 /**
- *
+ * ProductServlet handles product listing and adding items to cart.
  * @author ASUS
  */
 public class ProductServlet extends HttpServlet {
 
-    /**
-     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
-     * methods.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
-    protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
-        try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
-            out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            out.println("<title>Servlet ProductServlet</title>");            
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>Servlet ProductServlet at " + request.getContextPath() + "</h1>");
-            out.println("</body>");
-            out.println("</html>");
-        }
-    }
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        
+        HttpSession session = request.getSession(false);
+            if (session == null || session.getAttribute("currentUser") == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
+            System.out.println("SESSION CHECK: " + session);
+            System.out.println("currentUser: " + session.getAttribute("currentUser"));
+            
 
         ArrayList<Product> products = ProductIO.getInitList(); 
-        request.setAttribute("products", products);
+        
+        if (products == null || products.isEmpty()) {
+            request.setAttribute("error", "No products available.");
+        } else {
+            request.setAttribute("products", products);
+        }
+        
+        String actiontype = request.getParameter("actiontype");
+        
+        if ("new".equalsIgnoreCase(actiontype)) {
+            getServletContext()
+                .getRequestDispatcher("/product_new.jsp")
+                .forward(request, response);
+            return;
+        }
+        
+        if ("edit".equalsIgnoreCase(actiontype)) {
+            String productid = request.getParameter("productid");
+
+            if (productid != null) {
+                Product p = ProductIO.get(productid);
+
+                if (p != null) {
+                    request.setAttribute("product", p);
+                    getServletContext()
+                        .getRequestDispatcher("/product_edit.jsp")
+                        .forward(request, response);
+                    return;
+                }
+            }
+
+            request.getSession().setAttribute("message", "Invalid product selected.");
+            response.sendRedirect(request.getContextPath() + "/products");
+            return;
+        }
+
+        
         getServletContext().getRequestDispatcher("/product.jsp").forward(request, response);
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        processRequest(request, response);
         
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("currentUser") == null) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp");
+            return;
+        }
+        System.out.println("SESSION CHECK: " + session);
+        System.out.println("currentUser: " + session.getAttribute("currentUser"));
+
+        String actiontype = request.getParameter("actiontype");
+        String productid = request.getParameter("productid");
+        
+        if (actiontype == null || actiontype.isEmpty()) {
+            doGet(request, response);
+            return;
+        }
+
+        if ("AddCart".equalsIgnoreCase(actiontype)) {
+            System.out.println("AddCart Request: productid=" + request.getParameter("productid"));
+    
+            Product p = ProductIO.get(productid);
+
+            if (p != null) {
+                Cart cart = (Cart) session.getAttribute("CurrentCart");
+                if (cart == null) {
+                    cart = new Cart();
+                }
+
+                LineItem item = new LineItem();
+                item.setProduct(p);
+                item.setQuantity(1);
+                cart.addItem(item);
+                
+                session.setAttribute("CurrentCart", cart);
+                response.sendRedirect(request.getContextPath() + "/cart");
+                return;
+                
+            } else {
+                request.setAttribute("message", "Error: Product not found.");
+            }
+        }
+        
+        else if ("Delete".equalsIgnoreCase(actiontype)) {
+
+            try {
+                int id = Integer.parseInt(productid);
+                boolean deleted = ProductIO.delete(id);
+
+                if (deleted) {
+                    request.getSession().setAttribute("message",
+                            "Product deleted successfully.");
+                } else {
+                    request.getSession().setAttribute("message",
+                            "Error: Product not found or could not be deleted.");
+                }
+
+            } catch (NumberFormatException e) {
+                request.getSession().setAttribute("message", "Invalid product ID.");
+            }
+
+            response.sendRedirect(request.getContextPath() + "/products");
+            return;
+        } 
+        
+        else if ("Update".equalsIgnoreCase(actiontype)) {
+            try {
+                Product p = new Product();
+                p.setId(Integer.parseInt(request.getParameter("productid")));
+                p.setCode(request.getParameter("code"));
+                p.setDescription(request.getParameter("description"));
+                p.setPrice(new java.math.BigDecimal(request.getParameter("price")));
+                
+                boolean created =  ProductIO.update(p);   // SQL UPDATE
+                if (created) {
+                    request.getSession().setAttribute("message",
+                            "Product updated successfully.");
+                } else {
+                    request.getSession().setAttribute("message",
+                            "Failed to update product.");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+                response.sendRedirect(request.getContextPath() + "/products");
+                return;
+        }
+
+        else if ("Create".equalsIgnoreCase(actiontype)) {
+            try {
+                Product p = new Product();
+                p.setCode(request.getParameter("code"));
+                p.setDescription(request.getParameter("description"));
+                p.setPrice(new java.math.BigDecimal(request.getParameter("price")));
+
+                boolean created = ProductIO.add(p);
+
+                if (created) {
+                    request.getSession().setAttribute("message",
+                            "New product added successfully.");
+                } else {
+                    request.getSession().setAttribute("message",
+                            "Failed to add product.");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                request.getSession().setAttribute("message",
+                        "Invalid product data.");
+            }
+
+            response.sendRedirect(request.getContextPath() + "/products");
+            return;
+        }
+
+        // DEFAULT
+        doGet(request, response);
+
     }
 
-    /**
-     * Returns a short description of the servlet.
-     *
-     * @return a String containing servlet description
-     */
     @Override
     public String getServletInfo() {
-        return "Short description";
-    }// </editor-fold>
-
+        return "Handles product listing and Add-to-Cart operations";
+    }
 }
